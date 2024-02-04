@@ -26,8 +26,15 @@ class Planet(db.Model, SerializerMixin):
     nearest_star = db.Column(db.String)
 
     # Add relationship
-
+    missions = db.relationship("Mission", backref="planet") #only in perent
+    missions = db.relationship("Mission", 
+                               back_populates="planet", 
+                               cascade='all, delete' # delete all the associated mission obj
+                               )  # should be in perent and child class
+    
+    scientists_proxy = association_proxy("missions", "scientist")
     # Add serialization rules
+    serialize_rules = ("-missions.planet",)
 
 
 class Scientist(db.Model, SerializerMixin):
@@ -38,10 +45,25 @@ class Scientist(db.Model, SerializerMixin):
     field_of_study = db.Column(db.String)
 
     # Add relationship
-
+    missions = db.relationship("Mission", 
+                               back_populates="scientist",
+                               cascade='all, delete-orphan')
+    
+    planets_proxy = association_proxy("missions", "planets")
     # Add serialization rules
-
+    serialize_rules = ("-missions.scientist",)
     # Add validation
+    @validates('name', 'field_of_study')
+    def validate_scientist(self, key, value):
+        print(':::::::::::', key)
+        print(':::::::::::', value)
+
+        if not value:
+            raise ValueError("Failed simple name and field_of_study validation")
+        return value
+    
+    def __repr__(self):
+        return f"<Scientist {self.id}, {self.name}, {self.field_of_study}>"
 
 
 class Mission(db.Model, SerializerMixin):
@@ -49,12 +71,25 @@ class Mission(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
+    scientist_id = db.Column(db.Integer, db.ForeignKey("scientists.id"))
+    planet_id = db.Column(db.Integer, db.ForeignKey("planets.id"))
 
     # Add relationships
+    planet = db.relationship("Planet", back_populates="missions")
+    scientist = db.relationship("Scientist", back_populates="missions")
 
     # Add serialization rules
-
+    serialize_rules = ("-planet.missions","-scientist.missions",)
     # Add validation
+    @validates('name', 'scientist_id', 'planet_id')
+    def validate_mission(self, key, value):
+        # print(':::::::::::', key)
+        # print(':::::::::::', value)
 
+        if not value:
+            raise ValueError("Failed simple name, scientist_id and planet_id validation")
+        return value
 
+    def __repr__(self):
+        return f"<Mission {self.id}, {self.name}, {self.planet}, {self.scientist}>"
 # add any models you may need.
