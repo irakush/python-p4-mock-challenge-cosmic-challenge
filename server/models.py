@@ -57,9 +57,8 @@ class Scientist(db.Model, SerializerMixin):
     def validate_scientist(self, key, value):
         print(':::::::::::', key)
         print(':::::::::::', value)
-
         if not value:
-            raise ValueError("Failed simple name and field_of_study validation")
+            raise ValueError(f"Error :: {key} validation")
         return value
     
     def __repr__(self):
@@ -87,7 +86,7 @@ class Mission(db.Model, SerializerMixin):
         # print(':::::::::::', value)
 
         if not value:
-            raise ValueError("Failed simple name, scientist_id and planet_id validation")
+            raise ValueError(f"Error :: {key} validation")
         return value
 
     def __repr__(self):
